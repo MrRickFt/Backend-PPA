@@ -1,0 +1,173 @@
+📘 Backend para la Búsqueda de Vuelos (PPA)
+Este proyecto provee una API para gestionar y consultar vuelos en la base de datos. Incluye un endpoint para inicializar la base de datos con datos de prueba y otro para realizar búsquedas de vuelos con escalas.
+
+📝 Tabla de Contenidos
+Requisitos
+Instalación
+Configuración
+Estructura del Proyecto
+Scripts SQL
+Endpoints
+Ejecución
+
+
+📋 Requisitos
+Node.js v14+ (mejor v16+)
+PostgreSQL (para manejar la base de datos)
+
+🚀 Instalación
+Clonar el repositorio:
+git clone <url_del_repositorio>
+cd backend-ppa
+
+Instalar las dependencias:
+npm install
+
+🔧 Configuración
+Crear un archivo .env en la raíz del proyecto con las siguientes variables de entorno:
+DB_HOST=localhost
+DB_USER=tu_usuario
+DB_PASSWORD=tu_contraseña
+DB_NAME=nombre_bd
+DB_PORT=5432
+PORT=3001
+Configuración de base de datos en src/config/database.js. La configuración ya está preparada para leer las variables de entorno.
+
+📂 Estructura del Proyecto
+Este proyecto sigue una estructura de organización en capas, con carpetas dedicadas a controladores, modelos, rutas, servicios, y utilidades.
+
+
+
+backend-ppa/
+├── node_modules/
+├── src/
+│   ├── config/
+│   │   └── database.js             # Configuración de Sequelize para la conexión con PostgreSQL
+│   ├── controllers/
+│   │   └── flight.controller.js     # Controlador para manejar las operaciones de vuelos
+│   ├── models/
+│   │   ├── airport.js               # Modelo para aeropuertos
+│   │   ├── flight.js                # Modelo para vuelos
+│   │   ├── route.js                 # Modelo para rutas
+│   │   └── routeLeg.js              # Modelo para escalas de rutas
+│   ├── routes/
+│   │   └── flight.routes.js         # Rutas de vuelos
+│   ├── scripts/                     # Carpeta de scripts SQL para crear funciones/procedimientos almacenados
+│   │   ├── fn_check_duplicate_flight.sql
+│   │   ├── fn_get_flights.sql
+│   │   └── trig_before_insert_flight.sql
+│   ├── services/
+│   │   ├── flight.service.js        # Servicio de vuelos para la lógica de negocio
+│   │   └── seed.service.js          # Servicio para cargar datos iniciales en la BD
+│   ├── utils/
+│   │   ├── httpStatusCodes.js       # Manejador de códigos HTTP
+│   │   ├── responseHandler.js       # Manejador de respuestas estandarizadas
+│   │   └── validateParams.js        # Validación de parámetros
+│   ├── app.js                       # Configuración de la app Express
+│   └── server.js                    # Entrada principal de la app
+├── .env                             # Variables de entorno
+├── package.json
+└── README.md                        # Documentación del proyecto
+
+🗄️ Scripts SQL
+Para crear las funciones y procedimientos almacenados necesarios para la aplicación, ejecuta los scripts SQL en tu base de datos PostgreSQL. Estos scripts se encuentran en la carpeta src/scripts y deben ejecutarse en el siguiente orden:
+
+fn_check_duplicate_flight.sql: Verifica si un vuelo ya existe en la base de datos.
+fn_get_flights.sql: Función para obtener vuelos con o sin escalas entre dos aeropuertos.
+trig_before_insert_flight.sql: Trigger para acciones antes de insertar un vuelo en la base de datos.
+
+Puedes ejecutar estos scripts de la siguiente manera:
+psql -U tu_usuario -d nombre_bd -f src/scripts/fn_check_duplicate_flight.sql
+psql -U tu_usuario -d nombre_bd -f src/scripts/fn_get_flights.sql
+psql -U tu_usuario -d nombre_bd -f src/scripts/trig_before_insert_flight.sql
+
+📚 Endpoints
+A continuación se detallan los endpoints disponibles:
+
+1. Inicialización de la Base de Datos
+URL: http://localhost:3001/api/flights/seed
+Método: GET
+Descripción: Población inicial de la base de datos con datos de prueba.
+Respuesta de Éxito:
+json
+
+{
+  "success": true,
+  "message": "Database seeded successfully",
+  "data": []
+}
+
+2. Consulta de Vuelos
+
+URL: http://localhost:3001/api/flights
+
+Método: GET
+Descripción: Busca vuelos entre un origen y un destino específico en un día de la semana.
+Parámetros de Consulta:
+origin: Código IATA del aeropuerto de origen (Ejemplo: BOG)
+destination: Código IATA del aeropuerto de destino (Ejemplo: SMR)
+dayOfWeek: Día de la semana en número (0 para domingo, 1 para lunes, etc.)
+
+Ejemplo de Petición:
+http://localhost:3001/api/flights?origin=BOG&destination=SMR&dayOfWeek=1
+
+Respuesta de Éxito:
+
+json
+{
+  "success": true,
+  "message": "Flights fetched successfully",
+  "data": [
+    {
+      "flight_id": 3,
+      "origin": "BOG",
+      "destination": "SMR",
+      "departure_time": "07:00:00",
+      "arrival_time": "10:30:00",
+      "day_of_week": 1,
+      "stops": [
+        "BOG",
+        "BGA",
+        "CLO",
+        "SMR"
+      ]
+    },
+    {
+      "flight_id": 9,
+      "origin": "BOG",
+      "destination": "SMR",
+      "departure_time": "08:30:00",
+      "arrival_time": "12:00:00",
+      "day_of_week": 1,
+      "stops": [
+        "BOG",
+        "BGA",
+        "CLO",
+        "SMR"
+      ]
+    }
+  ]
+}
+
+▶️ Ejecución
+Para iniciar la aplicación, puedes utilizar los siguientes comandos:
+
+Modo Producción:
+npm start
+
+Modo Desarrollo (con reinicio automático usando nodemon):
+npm run start:dev
+La aplicación se ejecutará en http://localhost:3001.
+
+🛠️ Servicios y Utilidades
+El proyecto utiliza los siguientes servicios y utilidades para organizar la lógica de negocio y las respuestas HTTP:
+
+Servicios (src/services/): Contiene la lógica de negocio para manejar vuelos y la carga de datos iniciales.
+
+flight.service.js: Lógica para la consulta de vuelos.
+seed.service.js: Lógica para inicializar la base de datos.
+Utilidades (src/utils/): Utilidades comunes para manejo de respuestas HTTP y validación de parámetros.
+
+httpStatusCodes.js: Códigos de estado HTTP comunes.
+responseHandler.js: Respuestas estándar para éxito y error.
+validateParams.js: Validación de parámetros de entrada en las peticiones.
